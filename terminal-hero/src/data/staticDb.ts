@@ -17,6 +17,11 @@ export interface Monster {
     exp_range: [number, number];
     gold_range: [number, number];
     speed?: number;
+    drops: Array<{
+        item_key: string;
+        chance: number; // 0.0-1.0 (e.g., 0.3 = 30%)
+        quantity: [number, number]; // [min, max]
+    }>;
 }
 
 export interface Ability {
@@ -32,6 +37,7 @@ export interface Recipe {
     level_required: number;
     required_materials: Record<string, number>;
     crafted_item: string;
+    quantity_crafted?: number;
 }
 
 // ============ ITEM DATABASE ============
@@ -61,11 +67,17 @@ export const ITEM_DATABASE: Record<string, Item> = {
         value: 20,
         damage_bonus: 3,
     },
-    "common_arrow": {
-        name: "Flecha Comum",
-        item_type: "consumivel",
-        value: 5,
-        effect_value: 10,
+    "iron_sword": {
+        name: "Espada de Ferro",
+        item_type: "arma",
+        value: 50,
+        damage_bonus: 8,
+    },
+    "iron_armor": {
+        name: "Armadura de Ferro",
+        item_type: "armadura",
+        value: 45,
+        defense_bonus: 6,
     },
     "herb": {
         name: "Erva Medicinal",
@@ -94,6 +106,11 @@ export const MONSTER_DATABASE: Record<string, Monster> = {
         defense: 1,
         exp_range: [1, 10],
         gold_range: [1, 5],
+        speed: 1,
+        drops: [
+            { item_key: "herb", chance: 0.3, quantity: [1, 2] },
+            { item_key: "basic_potion", chance: 0.1, quantity: [1, 1] },
+        ],
     },
     "goblin": {
         name: "Goblin",
@@ -102,6 +119,12 @@ export const MONSTER_DATABASE: Record<string, Monster> = {
         defense: 4,
         exp_range: [5, 15],
         gold_range: [5, 10],
+        speed: 2,
+        drops: [
+            { item_key: "iron_ore", chance: 0.4, quantity: [1, 3] },
+            { item_key: "leather", chance: 0.2, quantity: [1, 2] },
+            { item_key: "basic_potion", chance: 0.15, quantity: [1, 1] },
+        ],
     },
     "zombie": {
         name: "Zombie",
@@ -110,6 +133,26 @@ export const MONSTER_DATABASE: Record<string, Monster> = {
         defense: 6,
         exp_range: [10, 20],
         gold_range: [10, 15],
+        speed: 1,
+        drops: [
+            { item_key: "iron_ore", chance: 0.5, quantity: [2, 4] },
+            { item_key: "leather", chance: 0.4, quantity: [1, 3] },
+            { item_key: "herb", chance: 0.2, quantity: [1, 1] },
+        ],
+    },
+    "orc": {
+        name: "Orc",
+        max_hp: 120,
+        attack: 15,
+        defense: 7,
+        exp_range: [20, 35],
+        gold_range: [15, 25],
+        speed: 2,
+        drops: [
+            { item_key: "iron_ore", chance: 0.6, quantity: [2, 5] },
+            { item_key: "leather", chance: 0.5, quantity: [2, 4] },
+            { item_key: "herb", chance: 0.3, quantity: [1, 2] },
+        ],
     },
 };
 
@@ -152,5 +195,17 @@ export const RECIPE_DATABASE: Record<string, Recipe> = {
         level_required: 5,
         required_materials: { iron_ore: 2, leather: 2 },
         crafted_item: "common_shield",
+    },
+    "iron_sword": {
+        name: "Espada de Ferro",
+        level_required: 8,
+        required_materials: { iron_ore: 5, leather: 1 },
+        crafted_item: "iron_sword",
+    },
+    "iron_armor": {
+        name: "Armadura de Ferro",
+        level_required: 10,
+        required_materials: { iron_ore: 6, leather: 3 },
+        crafted_item: "iron_armor",
     },
 };
