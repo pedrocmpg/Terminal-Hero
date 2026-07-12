@@ -12,7 +12,7 @@ PLAYER_STARTING_STATS = {
 MONSTER_DATABASE = {
     "slime": {
         "name": "Slime",
-        "hp": 30,
+        "max_hp": 30,
         "attack": 4,
         "defense": 1,
         "exp_range": (1, 10),
@@ -42,14 +42,14 @@ ABILITY_DATABASE = {
         "level_required": 5,
         "exp_cost": 20,
         "damage_multiplier": 1.5,
-        "duration": 0  # instant
+        "duration": 0  
     },
     "power_defense": {
         "name": "Power Defense",
         "level_required": 10,
         "exp_cost": 30,
-        "damage_multiplier": 0,  # not offensive
-        "duration": 2  # 2 turns of 100% defense boost
+        "damage_multiplier": 0, 
+        "duration": 2  
     }
 }
 
@@ -79,7 +79,8 @@ ITEM_DATABASE = {
         "name": "Poção de Vida Básica",
         "item_type": "consumivel",
         "value": 30,
-        "effect_value": 50
+        "effect_value": 50,
+        "id": "basic_potion"
     },
     "common_sword": {
         "name": "Espada Comum",
