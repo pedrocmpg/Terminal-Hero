@@ -37,6 +37,10 @@ export interface PlayerState {
         value: number;
         turns_remaining: number;
     }>;
+    // Prestige System
+    prestige_level: number;
+    prestige_points: number;
+    total_lifetime_exp: number;
 }
 
 export interface ItemData {
@@ -110,6 +114,10 @@ const initialPlayerState: PlayerState = {
     monsters_defeated: {},
     // REQUISITO 8
     active_effects: [],
+    // Prestige
+    prestige_level: 0,
+    prestige_points: 0,
+    total_lifetime_exp: 0,
 };
 
 // ============ REQUISITO 1: CURVA DE XP DINÂMICA ============
@@ -592,12 +600,15 @@ export function processOfflineProgress(savedState: PlayerState): PlayerState {
     const timeElapsedMs = currentTime - savedState.last_saved_at;
     const timeElapsedSeconds = timeElapsedMs / 1000;
     const timeElapsedMinutes = timeElapsedSeconds / 60;
+    const timeElapsedHours = timeElapsedMinutes / 60;
 
-    const XP_PER_MINUTE = 2;
-    const GOLD_PER_MINUTE = 1;
-    const MAX_OFFLINE_TIME_MINUTES = 7 * 24 * 60;
-
+    const MAX_OFFLINE_TIME_MINUTES = 7 * 24 * 60; // 7 dias
     const effectiveMinutes = Math.min(timeElapsedMinutes, MAX_OFFLINE_TIME_MINUTES);
+
+    // Escalar rewards baseado em prestige level
+    const prestigeMultiplier = 1 + (savedState.prestige_level * 0.25);
+    const XP_PER_MINUTE = 2 * prestigeMultiplier;
+    const GOLD_PER_MINUTE = 1 * prestigeMultiplier;
 
     const xpGained = Math.floor(effectiveMinutes * XP_PER_MINUTE);
     const goldGained = Math.floor(effectiveMinutes * GOLD_PER_MINUTE);
@@ -605,6 +616,11 @@ export function processOfflineProgress(savedState: PlayerState): PlayerState {
     let updatedState = gainExp(gainGold(savedState, goldGained), xpGained);
     updatedState.last_saved_at = currentTime;
     updatedState.playtime_seconds += Math.floor(timeElapsedSeconds);
+
+    // Log offline progress se foi mais de 1 minuto
+    if (timeElapsedMinutes > 1) {
+        console.log(`Offline progress: +${xpGained} XP, +${goldGained} Gold (${Math.round(timeElapsedMinutes)}m)`);
+    }
 
     return updatedState;
 }
@@ -878,9 +894,66 @@ export function migrateOldSave(oldState: any): PlayerState {
         playtime_seconds: oldState.playtime_seconds || 0,
         monsters_defeated: oldState.monsters_defeated || {},
         active_effects: oldState.active_effects || [],
+        prestige_level: oldState.prestige_level || 0,
+        prestige_points: oldState.prestige_points || 0,
+        total_lifetime_exp: oldState.total_lifetime_exp || 0,
     };
 
     return migrated;
+}
+
+// ============ PRESTIGE SYSTEM ============
+
+export function calculatePrestigePoints(playerState: PlayerState): number {
+    return Math.floor(Math.sqrt(playerState.total_lifetime_exp) / 10);
+}
+
+export function canPrestige(playerState: PlayerState): boolean {
+    return playerState.level >= 10 + (playerState.prestige_level * 5);
+}
+
+export function prestigeReset(playerState: PlayerState): { success: boolean; updatedState?: PlayerState; message?: string } {
+    if (!canPrestige(playerState)) {
+        return {
+            success: false,
+            message: `Você precisa do nível ${10 + (playerState.prestige_level * 5)} para prestigiar.`
+        };
+    }
+
+    const prestigePointsGained = calculatePrestigePoints(playerState);
+    const prestigeBonus = 1 + (playerState.prestige_level * 0.1);
+
+    const resetState: PlayerState = {
+        ...playerState,
+        hp: PLAYER_STARTING_STATS.hp,
+        max_hp: PLAYER_STARTING_STATS.hp,
+        attack: Math.ceil(PLAYER_STARTING_STATS.attack * prestigeBonus),
+        base_attack: Math.ceil(PLAYER_STARTING_STATS.attack * prestigeBonus),
+        defense: Math.ceil(PLAYER_STARTING_STATS.defense * prestigeBonus),
+        base_defense: Math.ceil(PLAYER_STARTING_STATS.defense * prestigeBonus),
+        speed: PLAYER_STARTING_STATS.speed,
+        exp: 0,
+        exp_to_next_level: calculateExpForLevel(1),
+        level: 1,
+        gold: 0,
+        inventory: { "basic_potion": 3, "herb": 2 },
+        prestige_level: playerState.prestige_level + 1,
+        prestige_points: playerState.prestige_points + prestigePointsGained,
+        total_lifetime_exp: playerState.total_lifetime_exp + playerState.experience_total,
+        battles_total: 0,
+        battles_won: 0,
+        battles_lost: 0,
+        experience_total: 0,
+        playtime_seconds: 0,
+        monsters_defeated: {},
+        active_effects: [],
+    };
+
+    return {
+        success: true,
+        updatedState: resetState,
+        message: `Prestigiou! Nível ${resetState.prestige_level} com +${prestigePointsGained} pontos. Ganhou ${Math.round((prestigeBonus - 1) * 100)}% de bônus de ATK/DEF!`
+    };
 }
 
 /**

@@ -7,16 +7,30 @@ export interface GameLoopState {
   currentLogs: string[];
   activeMonsterKey: string | null;
   isInitialized: boolean;
+  isTabActive: boolean;
   setActiveMonsterKey: (key: string | null) => void;
   manualAction: (action: (currentState: PlayerState) => PlayerState) => void;
+  clearLogs: () => void;
 }
 
 export function useGameLoop(): GameLoopState {
   const [player, setPlayer] = useState<PlayerState | null>(null);
   const [currentLogs, setCurrentLogs] = useState<string[]>([]);
   const [activeMonsterKey, setActiveMonsterKey] = useState<string | null>('slime');
+  const [isTabActive, setIsTabActive] = useState(true);
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const lastSaveRef = useRef<number>(0);
+
+  // Visibility Detection - economiza recursos quando aba não está em foco
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Inicializar o jogo na primeira montagem
   useEffect(() => {
@@ -24,6 +38,7 @@ export function useGameLoop(): GameLoopState {
     const processedState = processOfflineProgress(savedState);
     setPlayer(processedState);
     lastUpdateRef.current = Date.now();
+    lastSaveRef.current = Date.now();
   }, []);
 
   // Função para executar ações manuais (cliques de botão)
@@ -36,9 +51,13 @@ export function useGameLoop(): GameLoopState {
     });
   }, []);
 
-  // Game Loop Principal (1 segundo por tick)
+  const clearLogs = useCallback(() => {
+    setCurrentLogs([]);
+  }, []);
+
+  // Game Loop Principal - só executa quando aba está em foco
   useEffect(() => {
-    if (!player) return;
+    if (!player || !isTabActive) return;
 
     gameLoopRef.current = setInterval(() => {
       setPlayer((prevState) => {
@@ -55,8 +74,7 @@ export function useGameLoop(): GameLoopState {
           // Adicionar logs à fila
           setCurrentLogs((prevLogs) => {
             const combined = [...prevLogs, ...battleResult.battleLog];
-            // Manter apenas os últimos 100 logs para performance
-            return combined.slice(-100);
+            return combined.slice(-50); // Menos logs para UI mais responsiva
           });
 
           // Se um novo monstro foi designado, atualizar automaticamente
@@ -67,7 +85,7 @@ export function useGameLoop(): GameLoopState {
           // Sem combate ativo: apenas contar o tempo
           setCurrentLogs((prevLogs) => {
             if (prevLogs.length === 0) {
-              return ['> Sistema aguardando seleção de combate...'];
+              return ['> Selecione um monstro para começar...'];
             }
             return prevLogs;
           });
@@ -75,28 +93,30 @@ export function useGameLoop(): GameLoopState {
 
         // Salvar estado a cada 10 ticks (10 segundos)
         const now = Date.now();
-        if (now - lastUpdateRef.current > 10000) {
+        if (now - lastSaveRef.current > 10000) {
           saveGame(newState);
-          lastUpdateRef.current = now;
+          lastSaveRef.current = now;
         }
 
         return newState;
       });
-    }, 1000); // 1 segundo
+    }, 1000);
 
     return () => {
       if (gameLoopRef.current) {
         clearInterval(gameLoopRef.current);
       }
     };
-  }, [activeMonsterKey]);
+  }, [activeMonsterKey, isTabActive]);
 
   return {
     player: player || initialPlayerState,
     currentLogs,
     activeMonsterKey,
     isInitialized: player !== null,
+    isTabActive,
     setActiveMonsterKey,
     manualAction,
+    clearLogs,
   };
 }
