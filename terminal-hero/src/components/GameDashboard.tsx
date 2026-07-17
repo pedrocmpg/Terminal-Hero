@@ -38,13 +38,25 @@ export function GameDashboard() {
   if (!isInitialized) {
     return (
       <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-black flex items-center justify-center font-sans">
-        <div className="text-center space-y-4">
-          <div className="text-6xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            TERMINAL HERO
+        <div className="text-center space-y-6 animate-fadeIn">
+          <div className="relative">
+            <div className="text-8xl font-black tracking-tighter">
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+                TERMINAL
+              </span>
+            </div>
+            <div className="text-7xl font-black tracking-tighter mt-2">
+              <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
+                HERO
+              </span>
+            </div>
           </div>
           <div className="text-lg text-cyan-300 animate-pulse font-light tracking-widest">
             ► INICIALIZANDO SISTEMA
           </div>
+          <div className="w-48 h-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full mx-auto" style={{
+            animation: 'shimmer 2s infinite'
+          }} />
         </div>
       </div>
     );
@@ -53,19 +65,25 @@ export function GameDashboard() {
   const activeMonster = activeMonsterKey ? MONSTER_DATABASE[activeMonsterKey] : null;
   const stats = getPlayerStats(player);
 
-  const ProgressBar = ({ current, max, color = 'cyan' }: { current: number; max: number; color?: string }) => {
+  const ProgressBar = ({ current, max, color = 'cyan', label }: { current: number; max: number; color?: string; label?: string }) => {
     const percentage = Math.max(0, Math.min(100, (current / max) * 100));
     const colorClasses = {
-      cyan: 'bg-gradient-to-r from-cyan-500 to-cyan-400',
-      yellow: 'bg-gradient-to-r from-amber-500 to-amber-400',
-      red: 'bg-gradient-to-r from-red-500 to-red-400',
+      cyan: 'bg-gradient-to-r from-cyan-500 to-blue-500',
+      yellow: 'bg-gradient-to-r from-amber-500 to-orange-500',
+      red: 'bg-gradient-to-r from-red-500 to-pink-500',
+      emerald: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+      purple: 'bg-gradient-to-r from-purple-500 to-pink-500',
     };
     return (
-      <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden shadow-sm">
-        <div
-          className={`h-full ${colorClasses[color as keyof typeof colorClasses]} transition-all duration-300`}
-          style={{ width: `${percentage}%` }}
-        />
+      <div className="w-full">
+        {label && <div className="stat-label mb-2">{label}</div>}
+        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+          <div
+            className={`h-full ${colorClasses[color as keyof typeof colorClasses]} transition-all duration-300 shadow-lg`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <div className="text-xs text-slate-400 mt-1 text-right">{Math.floor(current)} / {Math.floor(max)}</div>
       </div>
     );
   };
@@ -75,18 +93,26 @@ export function GameDashboard() {
     onClick,
     disabled = false,
     size = 'sm',
+    variant = 'primary',
   }: {
     children: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     size?: 'xs' | 'sm' | 'md';
+    variant?: 'primary' | 'secondary' | 'danger' | 'success';
   }) => {
     const sizeClasses = { xs: 'px-2 py-1 text-xs', sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm' };
+    const variantClasses = {
+      primary: 'btn-primary',
+      secondary: 'btn-secondary',
+      danger: 'px-3 py-1.5 text-xs bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white border-none rounded-lg font-semibold transition-all duration-150',
+      success: 'px-3 py-1.5 text-xs bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white border-none rounded-lg font-semibold transition-all duration-150',
+    };
     return (
       <button
         onClick={onClick}
         disabled={disabled}
-        className={`${sizeClasses[size]} bg-cyan-600/80 hover:bg-cyan-500 text-white rounded font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`${sizeClasses[size]} ${variantClasses[variant]} disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {children}
       </button>
@@ -94,155 +120,235 @@ export function GameDashboard() {
   };
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans overflow-hidden flex flex-col">
-      {/* Header Minimalista */}
-      <div className="bg-gradient-to-r from-slate-900/80 to-slate-800/60 border-b border-cyan-500/20 backdrop-blur-sm px-4 py-3">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex items-center gap-3">
-            <span className="text-cyan-300 font-bold text-sm tracking-wider">TERMINAL HERO</span>
-            <span className="text-slate-500 text-xs">Lv {player.level}</span>
-            <span className="text-amber-300 text-xs">⚔ {stats.battles_won}W</span>
-            {player.prestige_level > 0 && (
-              <span className="text-yellow-400 text-xs font-bold">✦ Prestige {player.prestige_level}</span>
-            )}
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-950 text-slate-100 font-sans overflow-hidden flex flex-col">
+      {/* Premium Header */}
+      <div className="border-b border-cyan-500/20 px-6 py-4 backdrop-blur-md" style={{
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)'
+      }}>
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-2xl font-black bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent tracking-tighter">
+                TERMINAL HERO
+              </div>
+              <div className="text-xs text-slate-400 mt-1">RPG Idle · Prestige System</div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            {!isTabActive && <span className="text-red-400 animate-pulse">⦿ Paused</span>}
-            <span>Gold: {player.gold}</span>
-            {canPrestige(player) && (
-              <Button
-                size="xs"
-                onClick={() => {
-                  const result = prestigeReset(player);
-                  if (result.success) {
-                    manualAction(() => result.updatedState!);
-                    alert(result.message);
-                  }
-                }}
-              >
-                ✦ Prestige
-              </Button>
-            )}
+          <div className="flex items-center gap-6">
+            <div className="h-12 w-px bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent" />
+
+            {/* Player Info */}
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <div className="stat-label">Level</div>
+                <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{player.level}</div>
+              </div>
+              <div className="text-center">
+                <div className="stat-label">Victories</div>
+                <div className="text-2xl font-bold text-amber-400">{stats.battles_won}W</div>
+              </div>
+              <div className="text-center">
+                <div className="stat-label">Gold</div>
+                <div className="text-2xl font-bold text-yellow-400">₹{player.gold.toLocaleString()}</div>
+              </div>
+
+              {player.prestige_level > 0 && (
+                <div className="text-center px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-600/20 to-amber-600/20 border border-yellow-500/30">
+                  <div className="stat-label">Prestige</div>
+                  <div className="text-2xl font-bold text-yellow-400">✦ {player.prestige_level}</div>
+                </div>
+              )}
+
+              {!isTabActive && (
+                <div className="px-3 py-2 rounded-lg bg-red-600/20 border border-red-500/30">
+                  <div className="text-xs text-red-400 animate-pulse font-bold">⦿ PAUSED</div>
+                </div>
+              )}
+
+              {canPrestige(player) && (
+                <Button
+                  size="sm"
+                  variant="success"
+                  onClick={() => {
+                    const result = prestigeReset(player);
+                    if (result.success) {
+                      manualAction(() => result.updatedState!);
+                      alert(result.message);
+                    }
+                  }}
+                >
+                  ✦ PRESTIGE
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-3 p-3">
-        {/* Coluna Esquerda: Stats */}
-        <div className="lg:w-64 space-y-2 flex flex-col overflow-y-auto">
-          {/* HP e XP */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm">
-            <div className="text-xs text-slate-400 mb-1">HP</div>
-            <div className="text-sm font-bold text-red-400 mb-1">{player.hp}/{player.max_hp}</div>
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-4 p-6">
+        {/* LEFT COLUMN: Player Stats */}
+        <div className="lg:w-72 flex flex-col gap-4 overflow-y-auto pr-2">
+          {/* HP Card */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-3">Life Force</div>
+            <div className="flex items-baseline gap-2 mb-3">
+              <div className="stat-value text-2xl">{Math.floor(player.hp)}</div>
+              <div className="text-slate-400 text-sm">/ {Math.floor(player.max_hp)}</div>
+            </div>
             <ProgressBar current={player.hp} max={player.max_hp} color="red" />
-            <div className="text-xs text-slate-400 mt-2 mb-1">XP</div>
-            <div className="text-sm font-bold text-cyan-400 mb-1">{player.exp}/{player.exp_to_next_level}</div>
+          </div>
+
+          {/* XP Card */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-3">Experience Progress</div>
+            <div className="flex items-baseline gap-2 mb-3">
+              <div className="stat-value text-2xl">{Math.floor(player.exp)}</div>
+              <div className="text-slate-400 text-sm">/ {Math.floor(player.exp_to_next_level)}</div>
+            </div>
             <ProgressBar current={player.exp} max={player.exp_to_next_level} color="cyan" />
+            <div className="text-xs text-slate-400 mt-3">Level up in {Math.floor(player.exp_to_next_level - player.exp)} XP</div>
           </div>
 
-          {/* Stats */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm text-xs space-y-1">
-            <div className="flex justify-between"><span className="text-slate-400">ATK</span><span className="text-cyan-300 font-bold">{player.attack}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">DEF</span><span className="text-cyan-300 font-bold">{player.defense}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">SPD</span><span className="text-cyan-300 font-bold">{player.speed}</span></div>
-          </div>
-
-          {/* Equipamento */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm text-xs space-y-2">
-            <div className="font-bold text-cyan-300 text-xs uppercase tracking-wider">Equipamento</div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">{player.equipped_weapon ? '⚔' : '∅'}</span>
-                <span className="text-slate-300 text-xs truncate flex-1 ml-2">
-                  {player.equipped_weapon ? ITEM_DATABASE[player.equipped_weapon]?.name : 'Desarmado'}
-                </span>
+          {/* Stats Grid */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-4">Core Attributes</div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-slate-900/50 rounded-lg p-3 text-center border border-slate-700/50">
+                <div className="stat-label mb-2">Attack</div>
+                <div className="stat-value text-xl">{player.attack}</div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">{player.equipped_armor ? '🛡' : '∅'}</span>
-                <span className="text-slate-300 text-xs truncate flex-1 ml-2">
-                  {player.equipped_armor ? ITEM_DATABASE[player.equipped_armor]?.name : 'Sem armadura'}
-                </span>
+              <div className="bg-slate-900/50 rounded-lg p-3 text-center border border-slate-700/50">
+                <div className="stat-label mb-2">Defense</div>
+                <div className="stat-value text-xl">{player.defense}</div>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 text-center border border-slate-700/50">
+                <div className="stat-label mb-2">Speed</div>
+                <div className="stat-value text-xl">{player.speed}</div>
               </div>
             </div>
           </div>
 
-          {/* Mini Stats */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm text-xs space-y-1">
-            <div className="flex justify-between"><span className="text-slate-400">Vitórias</span><span className="text-emerald-400 font-bold">{stats.battles_won}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Derrotas</span><span className="text-red-400 font-bold">{stats.battles_lost}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">Monstros</span><span className="text-cyan-300 font-bold">{stats.monsters_total_defeated}</span></div>
+          {/* Equipment Card */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-4">Equipment</div>
+            <div className="space-y-3">
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                <div className="stat-label mb-2">Weapon {player.equipped_weapon ? '⚔' : ''}</div>
+                <div className="text-sm font-semibold text-cyan-300 truncate">
+                  {player.equipped_weapon ? ITEM_DATABASE[player.equipped_weapon]?.name : 'Unarmed'}
+                </div>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                <div className="stat-label mb-2">Armor {player.equipped_armor ? '🛡' : ''}</div>
+                <div className="text-sm font-semibold text-cyan-300 truncate">
+                  {player.equipped_armor ? ITEM_DATABASE[player.equipped_armor]?.name : 'No Armor'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Battle Stats */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-4">Battle Stats</div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-slate-900/30 rounded">
+                <span className="text-slate-400 text-sm">Victories</span>
+                <span className="badge badge-success">{stats.battles_won}W</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-slate-900/30 rounded">
+                <span className="text-slate-400 text-sm">Defeats</span>
+                <span className="badge badge-danger">{stats.battles_lost}L</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-slate-900/30 rounded">
+                <span className="text-slate-400 text-sm">Monsters Defeated</span>
+                <span className="badge badge-accent">{stats.monsters_total_defeated}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Coluna Central: Combate */}
-        <div className="flex-1 flex flex-col gap-2 min-h-0">
-          {/* Seleção de Monstro */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm">
-            <div className="text-xs text-slate-400 mb-2 uppercase tracking-wider font-bold">Monstros</div>
+        {/* CENTER COLUMN: Combat Arena */}
+        <div className="flex-1 flex flex-col gap-4 min-h-0">
+          {/* Monster Selection */}
+          <div className="card-glass p-4">
+            <div className="stat-label mb-4">Select Your Opponent</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {Object.entries(MONSTER_DATABASE).map(([key, monster]) => (
                 <button
                   key={key}
                   onClick={() => setActiveMonsterKey(key)}
-                  className={`p-2 rounded text-xs font-semibold transition-all ${
+                  className={`relative p-3 rounded-lg text-xs font-bold transition-all ${
                     activeMonsterKey === key
-                      ? 'bg-cyan-600 text-white border border-cyan-400'
-                      : 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600'
+                      ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg border border-cyan-400/50'
+                      : 'bg-slate-800/50 text-slate-300 border border-slate-700/50 hover:border-cyan-500/30 hover:bg-slate-700/70'
                   }`}
                 >
-                  {monster.name}
+                  <div className="truncate">{monster.name}</div>
+                  <div className="text-xs opacity-75 mt-1">❤ {Math.floor(monster.max_hp)}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Info Monstro */}
+          {/* Active Monster Info */}
           {activeMonster && (
-            <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm text-xs">
-              <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="card-glass p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="text-cyan-300 font-bold">{activeMonster.name}</div>
-                  <div className="text-slate-400">HP {activeMonster.max_hp}</div>
+                  <div className="text-2xl font-bold text-cyan-300 glow-text">{activeMonster.name}</div>
+                  <div className="text-slate-400 text-sm mt-1">Current Enemy</div>
                 </div>
-                <Button onClick={() => setActiveMonsterKey(null)} size="xs">Parar</Button>
+                <Button onClick={() => setActiveMonsterKey(null)} size="sm" variant="secondary">Stop Fight</Button>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="bg-slate-900/70 p-2 rounded text-center">
-                  <span className="text-slate-400 block text-xs">ATK</span>
-                  <span className="text-cyan-300 font-bold">{activeMonster.attack}</span>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-red-600/20 to-red-900/20 rounded-lg p-3 text-center border border-red-500/30">
+                  <div className="stat-label mb-2">HP</div>
+                  <div className="stat-value text-xl text-red-400">{Math.floor(activeMonster.max_hp)}</div>
                 </div>
-                <div className="bg-slate-900/70 p-2 rounded text-center">
-                  <span className="text-slate-400 block text-xs">DEF</span>
-                  <span className="text-cyan-300 font-bold">{activeMonster.defense}</span>
+                <div className="bg-gradient-to-br from-cyan-600/20 to-blue-900/20 rounded-lg p-3 text-center border border-cyan-500/30">
+                  <div className="stat-label mb-2">Attack</div>
+                  <div className="stat-value text-xl text-cyan-400">{activeMonster.attack}</div>
                 </div>
-                <div className="bg-slate-900/70 p-2 rounded text-center">
-                  <span className="text-slate-400 block text-xs">SPD</span>
-                  <span className="text-cyan-300 font-bold">{activeMonster.speed}</span>
+                <div className="bg-gradient-to-br from-purple-600/20 to-purple-900/20 rounded-lg p-3 text-center border border-purple-500/30">
+                  <div className="stat-label mb-2">Defense</div>
+                  <div className="stat-value text-xl text-purple-400">{activeMonster.defense}</div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Battle Log */}
-          <div className="flex-1 bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm flex flex-col min-h-0 overflow-hidden">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Battle Log</span>
-              <Button size="xs" onClick={clearLogs}>Limpar</Button>
+          <div className="flex-1 card-glass p-4 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div>
+                <div className="stat-label">Combat Log</div>
+                <div className="text-xs text-slate-400 mt-1">Real-time battle events</div>
+              </div>
+              <Button size="xs" onClick={clearLogs} variant="secondary">Clear</Button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-1 text-xs font-mono">
+
+            <div className="flex-1 overflow-y-auto space-y-1 text-xs font-mono pr-2">
               {currentLogs.length === 0 ? (
-                <div className="text-slate-500 italic text-center py-4">Selecione um inimigo...</div>
+                <div className="text-slate-500 italic text-center py-8 flex items-center justify-center h-full">
+                  <div>
+                    <div className="text-lg mb-2">⚔</div>
+                    <p>Select an opponent to begin battle</p>
+                  </div>
+                </div>
               ) : (
                 currentLogs.map((log, idx) => {
                   const logClass = log.includes('derrotado') || log.includes('novo')
-                    ? 'text-emerald-400'
+                    ? 'text-emerald-400 font-semibold'
                     : log.includes('dano')
                     ? 'text-amber-300'
+                    : log.includes('recebeu')
+                    ? 'text-red-400'
                     : 'text-slate-300';
                   return (
-                    <div key={idx} className={logClass}>
-                      {log.length > 80 ? log.substring(0, 77) + '...' : log}
+                    <div key={idx} className={`${logClass} leading-relaxed`}>
+                      {log.length > 85 ? log.substring(0, 82) + '…' : log}
                     </div>
                   );
                 })
@@ -252,21 +358,27 @@ export function GameDashboard() {
           </div>
         </div>
 
-        {/* Coluna Direita: Inventário */}
-        <div className="lg:w-56 flex flex-col gap-2 min-h-0 overflow-y-auto">
-          {/* Inventário */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm flex-1 flex flex-col min-h-0">
-            <div className="text-xs text-slate-400 mb-2 uppercase tracking-wider font-bold">Inventário</div>
-            <div className="flex-1 overflow-y-auto space-y-1">
+        {/* RIGHT COLUMN: Inventory & Crafting */}
+        <div className="lg:w-80 flex flex-col gap-4 min-h-0 overflow-y-auto pr-2">
+          {/* Inventory */}
+          <div className="card-glass p-4 flex-1 flex flex-col min-h-0">
+            <div className="stat-label mb-3">Inventory</div>
+            <div className="flex-1 overflow-y-auto space-y-2">
               {Object.keys(player.inventory).length === 0 ? (
-                <div className="text-xs text-slate-500 italic">Vazio</div>
+                <div className="text-center text-slate-500 py-8">
+                  <div className="text-3xl mb-2">📦</div>
+                  <p className="text-sm">Your inventory is empty</p>
+                </div>
               ) : (
                 Object.entries(player.inventory).map(([itemKey, quantity]) => {
                   const itemData = ITEM_DATABASE[itemKey];
                   return (
-                    <div key={itemKey} className="flex items-center justify-between gap-1 p-1 rounded bg-slate-900/50 text-xs">
-                      <span className="text-cyan-300 truncate flex-1">{itemData?.name}</span>
-                      <span className="text-slate-400">×{quantity}</span>
+                    <div key={itemKey} className="flex items-center justify-between gap-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 hover:border-cyan-500/30 transition-all">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-cyan-300 truncate">{itemData?.name}</div>
+                        <div className="text-xs text-slate-400">{itemData?.item_type}</div>
+                      </div>
+                      <div className="text-sm font-bold text-amber-400">×{quantity}</div>
                       <div className="flex gap-1">
                         {itemData?.item_type === 'consumivel' && (
                           <button
@@ -276,7 +388,8 @@ export function GameDashboard() {
                                 return result.updatedState || state;
                               })
                             }
-                            className="px-1 py-0.5 bg-emerald-600/70 hover:bg-emerald-500 text-xs rounded"
+                            className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-500 text-xs rounded font-semibold transition-all"
+                            title="Use Item"
                           >
                             ✓
                           </button>
@@ -288,7 +401,8 @@ export function GameDashboard() {
                               return result.updatedState || state;
                             })
                           }
-                          className="px-1 py-0.5 bg-amber-600/70 hover:bg-amber-500 text-xs rounded"
+                          className="px-2 py-1 bg-amber-600/70 hover:bg-amber-500 text-xs rounded font-semibold transition-all"
+                          title="Sell Item"
                         >
                           $
                         </button>
@@ -301,11 +415,14 @@ export function GameDashboard() {
           </div>
 
           {/* Crafting */}
-          <div className="bg-slate-800/70 border border-slate-700/50 rounded-lg p-3 backdrop-blur-sm flex-1 flex flex-col min-h-0">
-            <div className="text-xs text-slate-400 mb-2 uppercase tracking-wider font-bold">Crafting</div>
-            <div className="flex-1 overflow-y-auto space-y-1">
+          <div className="card-glass p-4 flex-1 flex flex-col min-h-0">
+            <div className="stat-label mb-3">Crafting</div>
+            <div className="flex-1 overflow-y-auto space-y-3">
               {player.learned_recipes.length === 0 ? (
-                <div className="text-xs text-slate-500 italic">Nenhuma receita</div>
+                <div className="text-center text-slate-500 py-8">
+                  <div className="text-3xl mb-2">🔧</div>
+                  <p className="text-sm">No recipes learned yet</p>
+                </div>
               ) : (
                 player.learned_recipes.map((recipeKey) => {
                   const recipe = RECIPE_DATABASE[recipeKey];
@@ -316,11 +433,15 @@ export function GameDashboard() {
                   );
 
                   return (
-                    <div key={recipeKey} className="text-xs bg-slate-900/50 p-1 rounded">
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-cyan-300 truncate font-semibold">{recipe.name}</span>
+                    <div key={recipeKey} className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div>
+                          <div className="text-sm font-bold text-cyan-300">{recipe.name}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">⏱ {recipe.time_to_craft}s</div>
+                        </div>
                         <Button
                           size="xs"
+                          variant={canCraft ? 'primary' : 'secondary'}
                           disabled={!canCraft}
                           onClick={() =>
                             manualAction((state) => {
@@ -329,16 +450,17 @@ export function GameDashboard() {
                             })
                           }
                         >
-                          ⚙
+                          Craft
                         </Button>
                       </div>
-                      <div className="space-y-0.5 text-slate-400">
+                      <div className="space-y-1">
                         {Object.entries(recipe.required_materials).map(([materialKey, needed]) => {
                           const currentQty = player.inventory[materialKey] || 0;
                           const hasEnough = currentQty >= needed;
                           return (
-                            <div key={materialKey} className={hasEnough ? 'text-emerald-400' : 'text-red-400'}>
-                              {ITEM_DATABASE[materialKey]?.name}: {currentQty}/{needed}
+                            <div key={materialKey} className={`text-xs flex justify-between ${hasEnough ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <span>{ITEM_DATABASE[materialKey]?.name}</span>
+                              <span>{currentQty}/{needed}</span>
                             </div>
                           );
                         })}
