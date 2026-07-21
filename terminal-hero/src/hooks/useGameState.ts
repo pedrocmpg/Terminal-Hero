@@ -1,4 +1,5 @@
 import { MONSTER_DATABASE, ITEM_DATABASE, ABILITY_DATABASE, RECIPE_DATABASE } from "../data/staticDb";
+import { readSaveFile, writeSaveFile } from "../persistence/saveFile";
 
 // ============ INTERFACES ============
 
@@ -578,15 +579,14 @@ export function spendGold(
 
 export function saveGame(state: PlayerState): void {
     const stateToSave = { ...state, last_saved_at: Date.now() };
-    localStorage.setItem("terminal_hero_save", JSON.stringify(stateToSave));
+    writeSaveFile(stateToSave);
 }
 
 export function loadGame(): PlayerState {
-    const savedState = localStorage.getItem("terminal_hero_save");
+    const savedState = readSaveFile();
     if (savedState) {
         try {
-            const parsed = JSON.parse(savedState) as any;
-            return migrateOldSave(parsed);
+            return migrateOldSave(savedState);
         } catch {
             console.warn("Erro ao carregar save, usando estado inicial");
             return initialPlayerState;
