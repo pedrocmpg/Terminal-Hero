@@ -82,10 +82,7 @@ export class GameEngine {
             const result = processCombatTurn(this.player, this.activeMonsterKey);
             this.player = result.updatedPlayerState;
             this.logs = [...this.logs, ...result.battleLog].slice(-MAX_LOGS);
-
-            if (result.newMonsterKey && this.player.hp > 0) {
-                this.activeMonsterKey = result.newMonsterKey;
-            }
+            // Mantém o mesmo monstro selecionado; ignora a troca aleatória sugerida pela lógica de combate.
         } else if (this.logs.length === 0) {
             this.logs = ["> Selecione um monstro para começar..."];
         }
