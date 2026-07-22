@@ -497,6 +497,20 @@ export function craftItem(
 
 // ============ LEVEL UP LOGIC ============
 
+/**
+ * Ganho de stats por level-up escala em brackets de 10 níveis (mesmo padrão
+ * de calculateExpForLevel), para o herói acompanhar monstros até nível 100.
+ */
+function getStatGainForLevel(newLevel: number): { hp: number; attack: number; defense: number } {
+    const bracket = Math.floor((newLevel - 1) / 10);
+    const multiplier = bracket + 1;
+    return {
+        hp: 10 * multiplier,
+        attack: 2 * multiplier,
+        defense: 2 * multiplier,
+    };
+}
+
 export function calculateLevelUp(currentPlayerState: PlayerState): PlayerState {
     let tempState = { ...currentPlayerState };
 
@@ -505,9 +519,10 @@ export function calculateLevelUp(currentPlayerState: PlayerState): PlayerState {
         const newLevel = tempState.level + 1;
         const newExp = tempState.exp - expNeeded;
 
-        const newMaxHp = tempState.max_hp + 10;
-        const newBaseAttack = tempState.base_attack + 2;
-        const newBaseDefense = tempState.base_defense + 2;
+        const gain = getStatGainForLevel(newLevel);
+        const newMaxHp = tempState.max_hp + gain.hp;
+        const newBaseAttack = tempState.base_attack + gain.attack;
+        const newBaseDefense = tempState.base_defense + gain.defense;
         const newSpeed = tempState.speed + 1;
 
         const weaponBonus = tempState.equipped_weapon

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { useGameEngine } from "./useGameEngine";
+import { CraftScreen } from "./CraftScreen";
 import {
     useConsumable,
-    craftItem,
     prestigeReset,
     canPrestige,
     getPlayerStats,
 } from "../hooks/useGameState";
-import { ITEM_DATABASE, MONSTER_DATABASE, RECIPE_DATABASE } from "../data/staticDb";
+import { ITEM_DATABASE, MONSTER_DATABASE } from "../data/staticDb";
 
 function Bar({ current, max, width = 20, color }: { current: number; max: number; width?: number; color: string }) {
     const ratio = max > 0 ? Math.max(0, Math.min(1, current / max)) : 0;
@@ -25,6 +25,7 @@ export function App() {
     const { exit } = useApp();
     const { player, logs, activeMonsterKey, setActiveMonsterKey, manualAction, clearLogs } = useGameEngine();
     const [message, setMessage] = useState<string | null>(null);
+    const [screen, setScreen] = useState<"main" | "craft">("main");
 
     const monsterKeys = Object.keys(MONSTER_DATABASE);
     const activeMonster = activeMonsterKey ? MONSTER_DATABASE[activeMonsterKey] : null;
@@ -33,6 +34,7 @@ export function App() {
     const flash = (msg: string) => setMessage(msg);
 
     useInput((input, key) => {
+        if (screen !== "main") return;
         if (input === "q") {
             exit();
             return;
@@ -65,22 +67,7 @@ export function App() {
             return;
         }
         if (input === "c") {
-            const recipeKey = player.learned_recipes.find((key) => {
-                const recipe = RECIPE_DATABASE[key];
-                if (!recipe) return false;
-                return Object.entries(recipe.required_materials).every(
-                    ([mat, qty]) => (player.inventory[mat] || 0) >= qty
-                );
-            });
-            if (!recipeKey) {
-                flash("Nenhuma receita craftável no momento.");
-                return;
-            }
-            manualAction((state) => {
-                const result = craftItem(state, recipeKey);
-                flash(result.message || result.error || "");
-                return result.updatedState || state;
-            });
+            setScreen("craft");
             return;
         }
         if (input === "r") {
@@ -99,6 +86,10 @@ export function App() {
             clearLogs();
         }
     });
+
+    if (screen === "craft") {
+        return <CraftScreen player={player} manualAction={manualAction} onClose={() => setScreen("main")} />;
+    }
 
     return (
         <Box flexDirection="column" width={100}>
@@ -159,7 +150,7 @@ export function App() {
 
             <Box borderStyle="single" borderColor="gray" paddingX={1} marginTop={1} justifyContent="space-between">
                 <Text dimColor>
-                    [m] trocar monstro  [s] parar  [p] poção  [c] craft  [r] prestigiar  [l] limpar log  [q] sair
+                    [m] trocar monstro  [s] parar  [p] poção  [c] crafting  [r] prestigiar  [l] limpar log  [q] sair
                 </Text>
             </Box>
 
