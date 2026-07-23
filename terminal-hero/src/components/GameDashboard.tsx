@@ -437,7 +437,6 @@ export function GameDashboard() {
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div>
                           <div className="text-sm font-bold text-cyan-300">{recipe.name}</div>
-                          <div className="text-xs text-slate-400 mt-0.5">⏱ {recipe.time_to_craft}s</div>
                         </div>
                         <Button
                           size="xs"

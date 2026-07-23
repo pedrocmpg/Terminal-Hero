@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { useGameEngine } from "./useGameEngine";
 import { CraftScreen } from "./CraftScreen";
+import { EquipScreen } from "./EquipScreen";
 import {
     useConsumable,
     prestigeReset,
@@ -25,7 +26,7 @@ export function App() {
     const { exit } = useApp();
     const { player, logs, activeMonsterKey, setActiveMonsterKey, manualAction, clearLogs } = useGameEngine();
     const [message, setMessage] = useState<string | null>(null);
-    const [screen, setScreen] = useState<"main" | "craft">("main");
+    const [screen, setScreen] = useState<"main" | "craft" | "equip">("main");
 
     const monsterKeys = Object.keys(MONSTER_DATABASE);
     const activeMonster = activeMonsterKey ? MONSTER_DATABASE[activeMonsterKey] : null;
@@ -70,6 +71,10 @@ export function App() {
             setScreen("craft");
             return;
         }
+        if (input === "e") {
+            setScreen("equip");
+            return;
+        }
         if (input === "r") {
             if (!canPrestige(player)) {
                 flash(`Nível insuficiente para prestigiar (precisa ${10 + player.prestige_level * 5}).`);
@@ -89,6 +94,10 @@ export function App() {
 
     if (screen === "craft") {
         return <CraftScreen player={player} manualAction={manualAction} onClose={() => setScreen("main")} />;
+    }
+
+    if (screen === "equip") {
+        return <EquipScreen player={player} manualAction={manualAction} onClose={() => setScreen("main")} />;
     }
 
     return (
@@ -111,6 +120,15 @@ export function App() {
                     <Bar current={player.exp} max={player.exp_to_next_level} color="cyan" />
                     <Text>ATK {player.attack}  DEF {player.defense}  SPD {player.speed}</Text>
                     <Text>Vitórias: {stats.battles_won}  Derrotas: {stats.battles_lost}</Text>
+                    <Box marginTop={1} flexDirection="column">
+                        <Text bold>Equipado</Text>
+                        <Text dimColor>
+                            Arma: {player.equipped_weapon ? ITEM_DATABASE[player.equipped_weapon]?.name : "-"}
+                        </Text>
+                        <Text dimColor>
+                            Armadura: {player.equipped_armor ? ITEM_DATABASE[player.equipped_armor]?.name : "-"}
+                        </Text>
+                    </Box>
                     <Box marginTop={1} flexDirection="column">
                         <Text bold>Inventário</Text>
                         {Object.keys(player.inventory).length === 0 ? (
@@ -150,7 +168,7 @@ export function App() {
 
             <Box borderStyle="single" borderColor="gray" paddingX={1} marginTop={1} justifyContent="space-between">
                 <Text dimColor>
-                    [m] trocar monstro  [s] parar  [p] poção  [c] crafting  [r] prestigiar  [l] limpar log  [q] sair
+                    [m] trocar monstro  [s] parar  [p] poção  [c] crafting  [e] equipar  [r] prestigiar  [l] limpar log  [q] sair
                 </Text>
             </Box>
 
